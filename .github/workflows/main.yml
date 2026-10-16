@@ -31,6 +31,11 @@ jobs:
 
     steps:
       - name: Checkout code
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
         uses: actions/checkout@v4
 
       # Build the Java API image
@@ -39,7 +44,7 @@ jobs:
         with:
           context: ./simple-api
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-simple-api:latest
-          push: false
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
       # Build the PostgreSQL image
       - name: Build Docker image Database
@@ -47,7 +52,7 @@ jobs:
         with:
           context: ./database
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-database:latest
-          push: false
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
       # Build the HTTP server image
       - name: Build Docker image HTTPD
@@ -55,4 +60,4 @@ jobs:
         with:
           context: ./http-server
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-httpd:latest
-          push: false
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
