@@ -23,3 +23,36 @@ jobs:
 
       - name: Build and test with Maven
         run: mvn clean verify --file ./simple-api/pom.xml
+
+  # Build Docker images only after backend tests pass
+  build-and-push-docker-image:
+    needs: test-backend
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Build the Java API image
+      - name: Build Docker image API
+        uses: docker/build-push-action@v6
+        with:
+          context: ./simple-api
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-simple-api:latest
+          push: false
+
+      # Build the PostgreSQL image
+      - name: Build Docker image Database
+        uses: docker/build-push-action@v6
+        with:
+          context: ./database
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-database:latest
+          push: false
+
+      # Build the HTTP server image
+      - name: Build Docker image HTTPD
+        uses: docker/build-push-action@v6
+        with:
+          context: ./http-server
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-httpd:latest
+          push: false
