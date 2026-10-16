@@ -8,6 +8,7 @@ on:
   pull_request:
 
 jobs:
+  # Job 1 : Build and test the Java application
   test-backend:
     runs-on: ubuntu-24.04
 
@@ -24,38 +25,41 @@ jobs:
       - name: Build and test with Maven
         run: mvn clean verify --file ./simple-api/pom.xml
 
-  # Build Docker images only after backend tests pass
+  # Job 2 : Build and publish Docker images
   build-and-push-docker-image:
     needs: test-backend
     runs-on: ubuntu-24.04
 
     steps:
+      # Get source code
       - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Authenticate to Docker Hub using GitHub Secrets
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-        uses: actions/checkout@v4
 
-      # Build the Java API image
-      - name: Build Docker image API
+      # Build and publish the Java API image
+      - name: Build and push Docker image API
         uses: docker/build-push-action@v6
         with:
           context: ./simple-api
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-simple-api:latest
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
-      # Build the PostgreSQL image
-      - name: Build Docker image Database
+      # Build and publish the PostgreSQL image
+      - name: Build and push Docker image Database
         uses: docker/build-push-action@v6
         with:
           context: ./database
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-database:latest
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
-      # Build the HTTP server image
-      - name: Build Docker image HTTPD
+      # Build and publish the HTTP server image
+      - name: Build and push Docker image HTTPD
         uses: docker/build-push-action@v6
         with:
           context: ./http-server
